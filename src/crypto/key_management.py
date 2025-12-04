@@ -1,26 +1,35 @@
-from typing import Tuple
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
+from pathlib import Path
 from typing import Tuple, Optional
+
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization as ser
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.backends import default_backend
+
 from .kdf import derive_key_from_password
+from src.utils.paths import ensure_dir
 
-#Generate RSA private:public key pair
-def generate_rsa_keypair(key_size: int = 2048) -> Tuple[bytes, bytes]:
-    private_key = rsa.generate_private_key(public_exponent=65537,key_size=key_size,)
+# private:public key pair
+def rsa_keypair() -> Tuple[bytes, bytes]:
+    key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+        backend=default_backend
+    )
 
-    private_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM, 
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),  # encrypt manually later
+    private_key = key.private_bytes(
+        encoding=ser.Encoding.PEM, 
+        format=ser.PrivateFormat.PKCS8,
+        encryption_algorithm=ser.NoEncryption()
     )
-    public_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+
+    public_key = key.public_key().public_bytes(
+        encoding=ser.Encoding.PEM,
+        format=ser.PublicFormat.SubjectPublicKeyInfo
     )
-    #in PEM format
-    return private_pem, public_pem
+
+    return private_key, public_key
 
 #Encrypt the private key using AES-GCM
 def encrypt_private_key(private_key_pem: bytes, password: str) -> bytes:
@@ -47,24 +56,24 @@ def decrypt_private_key(encrypted_private_key: bytes, password: str) -> bytes:
 
 #Save keys to a directory
 def save_keys_to_files(private_key_data: bytes, public_key_data: bytes, directory: str) -> None:
-    os.makedirs(directory, exist_ok=True)
+    dir = Path(directory)
+    ensure_dir(dir)
 
-    with open(os.path.join(directory, "private_key.enc"), "wb") as f:
-        f.write(private_key_data)
+    priv_path = dir/"private_key.enc"
+    pub_path = dir/"public_key.pem"
 
-    with open(os.path.join(directory, "public_key.pem"), "wb") as f:
-        f.write(public_key_data)
+    priv_path.write_bytes(private_key_data)
+    pub_path.write_bytes(public_key_data)
 
 #Load keys from a directory
 def load_keys_from_files(directory: str) -> Tuple[Optional[bytes], Optional[bytes]]:
-    priv_path = os.path.join(directory, "private_key.enc")
-    pub_path = os.path.join(directory, "public_key.pem")
+    dir = Path(directory)
 
-    if not (os.path.exists(priv_path) and os.path.exists(pub_path)):
-        return None, None
+    priv_path = dir/"private_key.enc"
+    pub_path = dir/"public_key.pem"
 
-    with open(priv_path, "rb") as f:
-        priv = f.read()
-    with open(pub_path, "rb") as f:
-        pub = f.read()
-    return priv, pub
+    if not (priv_path.exists() and pub_path.exists()): return None,None
+
+    encrypted_priv = priv_path.read_bytes()
+    public_pem = pub_path.read_bytes()
+    return encrypted_priv, public_pem
