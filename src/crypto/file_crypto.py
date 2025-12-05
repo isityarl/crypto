@@ -4,6 +4,8 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from .kdf import derive_key_from_password
 from src.utils.paths import ensure_dir, default_encrypted_name, default_decrypted_name
+from src.crypto.signatures import sign_bytes, verify_signature
+from src.crypto.key_management import load_keys_from_files, decrypt_private_key
 
 
 def _encrypt_bytes(data: bytes, password: str) -> bytes:
@@ -29,12 +31,12 @@ def _decrypt_bytes(blob: bytes, password: str) -> bytes:
 def encrypt_path(input_path: str, output_path: str, password: str, recursive: bool = True) -> None:
     src = Path(input_path)
     dest = Path(output_path)
-    ensure_dir(dest if src.is_dir() else dest.parent)
+    ensure_dir(dest if src.is_dir() else dest.parent) #create new if needed
 
-    if src.is_file():
+    if src.is_file(): #for file
         output_file = dest if dest.suffix else dest / default_encrypted_name(src).name
         output_file.write_bytes(_encrypt_bytes(src.read_bytes(), password))
-    elif src.is_dir():
+    elif src.is_dir(): #for dir
         for item in src.iterdir():
             target_path = dest / item.name
             if item.is_file():
@@ -64,3 +66,43 @@ def decrypt_path(input_path: str, output_path: str, password: str, recursive: bo
                 decrypt_path(item, target_path, password, recursive)
     else:
         print("LOL")
+
+#signatures for integrity
+def sign_encrypted_path(enc_path: str | Path, password: str, keys_dir: str | Path) -> Path:
+    enc_path = Path(enc_path)
+    keys_dir = Path(keys_dir)
+
+    #load keys
+    public_pem, encrypted_private = load_keys_from_files(keys_dir)
+    if public_pem is None or encrypted_private is None:
+        raise ValueError("Keys not found in keys_dir")
+
+    #decrypt private key
+    private_pem = decrypt_private_key(encrypted_private, password)
+
+    #sign the file
+    data = enc_path.read_bytes()
+    signature = sign_bytes(private_pem, data)
+
+    #store next to encrypted file
+    sig_path = enc_path.with_suffix(enc_path.suffix + ".sig")
+    sig_path.write_bytes(signature)
+    return sig_path
+
+
+def verify_encrypted_path(enc_path: str | Path, keys_dir: str | Path) -> bool:
+    enc_path = Path(enc_path)
+    keys_dir = Path(keys_dir)
+
+    public_pem, _ = load_keys_from_files(keys_dir)
+    if public_pem is None:
+        raise ValueError("Public key not found in keys_dir")
+
+    sig_path = enc_path.with_suffix(enc_path.suffix + ".sig")
+    if not sig_path.exists():
+        return False
+
+    data = enc_path.read_bytes()
+    signature = sig_path.read_bytes()
+
+    return verify_signature(public_pem, data, signature)
