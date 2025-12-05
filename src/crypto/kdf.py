@@ -8,7 +8,7 @@ def derive_key_from_password(password: str, salt: bytes, iterations: int = 100_0
         length=length, #256 bits
         salt=salt,
         iterations=iterations,
-        backend=default_backend(),
+        backend=default_backend()
     )
     key = kdf.derive(password.encode("utf-8"))
     return key

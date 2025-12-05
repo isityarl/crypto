@@ -24,26 +24,28 @@ class SecureFileApp(tk.Tk):
         h = (win_h - img_h) // 2
 
         self.bg_label = tk.Label(self, image=self.image)
-        self.bg_label.place(w, h)
+        self.bg_label.place(x=w, y=h)
 
 
-        tk.Label(self, text="Input:").place(40, 100)
+        tk.Label(self, text="Input:").place(x=40, y=100)
         self.input_entry = tk.Entry(self, width=35)
-        self.input_entry.place(100, 100)
-        tk.Button(self, text='Browse', command=self.browse_input).place(420, 95)
+        self.input_entry.place(x=100, y=100)
+        tk.Button(self, text='Browse', command=self.browse_input).place(x=420, y=95)
 
-        tk.Label(self, text="Output:").place(40, 140)
+        tk.Label(self, text="Output:").place(x=40, y=140)
         self.output_entry = tk.Entry(self, width=35)
-        self.output_entry.place(100, 140)
-        tk.Button(self, text='Browse', command=self.browse_output).place(420, 135)
+        self.output_entry.place(x=100, y=140)
+        tk.Button(self, text='Browse', command=self.browse_output).place(x=420, y=135)
 
-        tk.Label(self, text="Password:").place(40, 180)
+        tk.Label(self, text="Password:").place(x=40, y=180)
         self.password_entry = tk.Entry(self, width=35, show="*")
-        self.password_entry.place(120, 180)
+        self.password_entry.place(x=120, y=180)
 
-        tk.Button(self, text="Encrypt", command=self.run_encrypt, width=10).place(160, 480)
-        tk.Button(self, text="Decrypt", command=self.run_decrypt, width=10).place(300, 480)
+        tk.Button(self, text="Encrypt", command=self.run_encrypt, width=10).place(x=160, y=480)
+        tk.Button(self, text="Decrypt", command=self.run_decrypt, width=10).place(x=300, y=480)
 
+        self.status_label = tk.Label(self, text="", bg="#1e1e1e", fg="white")
+        self.status_label.place(x=40, y=520)
 
 
     def browse_input(self):
