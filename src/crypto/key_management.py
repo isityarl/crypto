@@ -76,4 +76,12 @@ def load_keys_from_files(directory: str) -> Tuple[Optional[bytes], Optional[byte
 
     encrypted_priv = priv_path.read_bytes()
     public_pem = pub_path.read_bytes()
-    return encrypted_priv, public_pem
+    return public_pem, encrypted_priv
+
+def generate_and_store_keys(keys_dir: str | Path, password: str) -> None:
+    keys_dir = Path(keys_dir)
+    ensure_dir(keys_dir)
+
+    private_pem, public_pem = rsa_keypair()
+    encrypted_private = encrypt_private_key(private_pem, password)
+    save_keys_to_files(encrypted_private, public_pem, keys_dir)
