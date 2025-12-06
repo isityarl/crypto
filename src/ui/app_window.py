@@ -109,9 +109,14 @@ class SecureFileApp(tk.Tk):
         inputs = self.selected_inputs
         output_path = self.output_entry.get().strip()
         password = self.password_entry.get()
+        confirm = self.confirm_entry.get()
 
-        if not inputs or not output_path or not password:
+        if not inputs or not output_path or not password or not confirm:
             messagebox.showerror("Error", "Didnt fill in, huh?")
+            return
+
+        if password != confirm:
+            messagebox.showerror("Error", "Passwords do not match.")
             return
 
         try:
