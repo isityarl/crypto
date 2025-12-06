@@ -1,8 +1,10 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox
 from typing import List
+import traceback
 
-from src.crypto.file_crypto import encrypt_path, decrypt_path, encrypt_and_sign_path, verify_and_decrypt_path
+from src.crypto.file_crypto import encrypt_and_sign_path, verify_and_decrypt_path
+
 
 class SecureFileApp(tk.Tk):
     def __init__(self):
@@ -19,7 +21,6 @@ class SecureFileApp(tk.Tk):
         self.input_browse_btn = None
         self.input_clear_btn = None
         self._build_widgets()
-        
 
     def _build_widgets(self):
         win_w, win_h = 450, 500
@@ -30,7 +31,6 @@ class SecureFileApp(tk.Tk):
 
         self.bg_label = tk.Label(self, image=self.image)
         self.bg_label.place(x=w, y=h)
-
 
         self.input_entry = tk.Entry(self, width=35)
         self.input_entry.place(x=35, y=100)
@@ -60,13 +60,11 @@ class SecureFileApp(tk.Tk):
         self.confirm_entry.bind("<FocusIn>", self._on_confirm_focus_in)
         self.confirm_entry.config(bg="#2b2b2b", fg="#777777")
 
-
         tk.Button(self, text="Encrypt", command=self.run_encrypt, width=10).place(x=90, y=280)
         tk.Button(self, text="Decrypt", command=self.run_decrypt, width=10).place(x=230, y=280)
 
         self.status_label = tk.Label(self, text="", bg="#1e1e1e", fg="white")
         self.status_label.place(x=40, y=520)
-
 
     def browse_input(self):
         folder = filedialog.askdirectory()
@@ -81,7 +79,7 @@ class SecureFileApp(tk.Tk):
         self.input_entry.config(state="readonly")
 
         self.input_browse_btn.place_forget()
-        self.input_clear_btn.place(x=420, y=95)
+        self.input_clear_btn.place(x=350, y=95)
 
     def clear_input(self):
         self.selected_inputs = []
@@ -91,14 +89,15 @@ class SecureFileApp(tk.Tk):
         self.input_entry.config(state="readonly")
 
         self.input_clear_btn.place_forget()
-        self.input_browse_btn.place(x=420, y=95)
-
+        self.input_browse_btn.place(x=350, y=95)
 
     def browse_output(self):
         path = filedialog.askdirectory()
         if path:
+            self.output_entry.config(state="normal")
             self.output_entry.delete(0, tk.END)
             self.output_entry.insert(0, path)
+            self.output_entry.config(state="readonly")
 
     def run_encrypt(self):
         self._run_crypto("encrypt")
@@ -127,20 +126,16 @@ class SecureFileApp(tk.Tk):
             else:
                 self.status_label.config(text="Verification successful")
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            traceback.print_exc()
+            messagebox.showerror("Error", f"{type(e).__name__}: {e}")
             self.status_label.config(text=f"{operation.capitalize()} failed")
 
     def _on_password_focus_in(self, event):
         if self.password_entry.get() == "Password":
             self.password_entry.delete(0, tk.END)
-            self.password_entry.config(show="*")
-            
-    def _on_password_focus_in(self, event):
-        if self.password_entry.get() == "Password":
-            self.password_entry.delete(0, tk.END)
-            self.password_entry.config(show="*")
+            self.password_entry.config(show="*", bg="#1e1e1e", fg="#ffffff")
 
     def _on_confirm_focus_in(self, event):
         if self.confirm_entry.get() == "Confirm password":
             self.confirm_entry.delete(0, tk.END)
-            self.confirm_entry.config(show="*")
+            self.confirm_entry.config(show="*", bg="#1e1e1e", fg="#ffffff")
