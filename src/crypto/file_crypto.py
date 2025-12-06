@@ -106,3 +106,18 @@ def verify_encrypted_path(enc_path: str | Path, keys_dir: str | Path) -> bool:
     signature = sig_path.read_bytes()
 
     return verify_signature(public_pem, data, signature)
+
+def encrypt_and_sign_path(input_path: str, output_path: str, password: str, keys_dir: str | Path) -> None:
+    encrypt_path(input_path, output_path, password)
+    out = Path(output_path)
+    for p in out.rglob("*.enc"):
+        sign_encrypted_path(p, password, keys_dir)
+
+
+def verify_and_decrypt_path(input_path: str, output_path: str, password: str, keys_dir: str | Path) -> None:
+    inp = Path(input_path)
+    # verify all .enc files first
+    for p in inp.rglob("*.enc"):
+        if not verify_encrypted_path(p, keys_dir):
+            raise ValueError(f"Signature verification failed for {p}")
+    decrypt_path(input_path, output_path, password)
