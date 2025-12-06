@@ -1,7 +1,10 @@
 ## Overview
+<img width="450" height="637" alt="image" src="https://github.com/user-attachments/assets/7085c1e1-20b6-4b8d-a54e-75c6e7e87120" />
 
-Yarl Lock is a desktop application that encrypts and decrypts folders using a user‑supplied password.  
+Desktop application that encrypts and decrypts folders using a user‑supplied password.  
 It uses modern cryptography (AES‑GCM, PBKDF2, RSA, RSA‑PSS, SHA‑256) and provides a simple Tkinter GUI.
+
+`Presentation is in /docs`
 
 Core goals:
 
